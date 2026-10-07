@@ -23,13 +23,14 @@ Python backend. Frontend: JS/TS, HTML, CSS. Mobile welcome (Android/iOS, usable 
 ## Hard rules
 1. License is FSL-1.1-MIT (`LICENSE.md`). Nothing conflicting goes in (no GPL/AGPL code, etc.). Flag doubts.
 2. Nothing with the owner's name or email goes into any public file, commit, or metadata without explicit approval.
-3. No push, publish, or release without explicit approval.
+3. No push, publish, or release without explicit approval. Never merge a PR yourself unless the owner says so.
 4. The Jev threshold stays **0.75**. Calibrate by changing the question, never the threshold.
 5. Lasting decisions go in `DECISIONS.md`, one line, dated.
 6. Stay model-agnostic: no instructions that only work in one vendor's tool.
+7. Every PR body follows `skills/pr.md`: the first line answers **Complete** and **Irreversible**.
 
 ## Map
 - `context/`: sources.md, filter_rules.md, sort_rules.md, memory.md
-- `skills/`: setup.md, edition_build.md, calibrate_filter.md
+- `skills/`: setup.md, edition_build.md, calibrate_filter.md, pr.md
 - `SCHEDULED.md`: the 7AM job
 - `SPEC.md`: build spec (code layout, Jev call, acceptance)

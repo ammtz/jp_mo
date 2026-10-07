@@ -22,6 +22,8 @@ Format: `YYYY-MM-DD: decision. Why.`
 
 - 2026-10-07: Setup is agent-driven (`skills/setup.md`, triggered by a missing `.env` or "set me up"). On desktop, keys are pasted into a local file the agent opens, never into chat. In the cloud, environment variables override `.env`; pasting into chat is the fallback. Why: an end user only needs Claude Code and a clone.
 
+- 2026-10-07: PR review = two booleans on line 1 (`skills/pr.md`): Complete (fully wired, no stubs) and Irreversible (not undoable by revert). 🟢 merge / 🟡 read / 🔴 not ready. Adapted from Matt Pocock's `pr` skill (MIT). Why: the owner reviews in one line.
+
 ## Open
 - `USER_GOAL` is a draft in `AGENTS.md`.
 - Filter-question ladder is DRAFT; needs an owner interview.
