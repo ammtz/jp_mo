@@ -1,0 +1,164 @@
+"""The only place a model is used. Jev via Vercel AI Gateway, or any gateway chat model."""
+import hashlib
+import json
+import re
+import time
+
+from .models import MOMENTUM_UNITS, Judgement, JudgeMeta
+from .net import HttpError
+from .readme import README_P1, README_P2
+from .select import THRESHOLD
+
+CLOSE_FLOOR = 0.50
+BATCH = 40
+BACKOFF = (1, 4, 16)
+
+# Must match the table in context/filter_rules.md (a test enforces it).
+LADDER = {
+    -2: "Does this item point to any idea, tool, or technique the reader could personally try? a: yes. b: no.",
+    -1: "Could the reader turn this item into something they build or use themselves? a: yes. b: no, it's only news, entertainment, or opinion.",
+    0: "Could the reader, working alone, turn this item into an idea or solution they can build and run themselves within about a month? a: yes, worth their morning. b: no, it's entertainment, news without an actionable angle, or it needs a team or capital.",
+    1: "Same as level 0, plus: the problem it solves is clear, and the reader could ship a first version in a weekend.",
+    2: "Same as level +1, plus: nothing well known already solves it the same way.",
+}
+LEVEL_MIN, LEVEL_MAX = min(LADDER), max(LADDER)
+
+
+class JudgeError(Exception):
+    pass
+
+
+def instructions(level: int) -> str:
+    """Levels +1/+2 build on the lower rungs, so spell the full chain out for the model."""
+    if level <= 0:
+        return LADDER[level]
+    return " ".join([LADDER[0]] + [LADDER[i].split("plus: ", 1)[1] for i in range(1, level + 1)])
+
+
+def state_text(goal: str) -> str:
+    return (f"Reader: an engineer who works alone. Goal: {goal.rstrip('.')}.\n"
+            "They read a 4-5 item morning paper and want only items they could act on themselves.")
+
+
+def question(level: int, c, n: int) -> str:
+    lines = [instructions(level), "", f"Item ({c.source}): {c.title}", c.url]
+    if c.summary:
+        lines.append(c.summary)
+    lines.append(f"Signals: +{c.momentum:,.0f} {MOMENTUM_UNITS[c.source]}")
+    if c.readme:
+        lines.append(f"README (first {n} chars): {c.readme[:n]}")
+    return "\n".join(lines)
+
+
+def _prob(v):
+    return float(v) if isinstance(v, (int, float)) and 0 <= v <= 1 else None
+
+
+class _Retrying:
+    def __init__(self, cfg, http, sleep=time.sleep):
+        self.cfg, self.http, self.sleep = cfg, http, sleep
+        self.meta = JudgeMeta()
+
+    def _post(self, path, body):
+        headers = {"Authorization": "Bearer " + self.cfg.gateway_key}
+        for wait in BACKOFF + (None,):
+            try:
+                self.meta.requests += 1
+                return self.http.post_json(self.cfg.gateway_base + path, body, headers)
+            except HttpError as e:
+                if wait is None or not (e.status in (0, 429, 529) or e.status >= 500):
+                    raise JudgeError(str(e)) from e
+                self.sleep(wait)
+
+    def _account(self, resp):
+        gw = (resp.get("providerMetadata") or {}).get("gateway") or {}
+        try:
+            self.meta.cost_usd += float(gw.get("cost") or 0)
+        except ValueError:
+            pass
+        self.meta.input_tokens += int((resp.get("usage") or {}).get("inputTokens") or 0)
+        self.meta.model = resp.get("model") or self.meta.model
+
+
+class JevJudge(_Retrying):
+    name = "jev"
+
+    def ask(self, state: str, questions: dict) -> dict:
+        ids, out = list(questions), {}
+        for start in range(0, len(ids), BATCH):
+            chunk = ids[start:start + BATCH]
+            keys = {f"c{i}": cid for i, cid in enumerate(chunk)}
+            resp = self._post("/v1/evaluate", {
+                "model": self.cfg.jev_model,
+                "state": state,
+                "questions": {k: {"type": "boolean", "instructions": questions[cid]} for k, cid in keys.items()},
+            })
+            self._account(resp)
+            answers = resp.get("answers") or {}
+            for k, cid in keys.items():
+                out[cid] = _prob((answers.get(k) or {}).get("probability"))
+        return out
+
+
+class ChatJudge(_Retrying):
+    name = "chat"
+    SYSTEM = ("You judge one item for a reader. Context:\n{state}\n\n"
+              "Answer the question with the probability that the answer is a. "
+              'Reply with only JSON: {{"p": <number from 0 to 1>}}')
+
+    def ask(self, state: str, questions: dict) -> dict:
+        out = {}
+        for cid, text in questions.items():
+            resp = self._post("/v1/chat/completions", {
+                "model": self.cfg.chat_model,
+                "temperature": 0,
+                "messages": [{"role": "system", "content": self.SYSTEM.format(state=state)},
+                             {"role": "user", "content": text}],
+            })
+            self._account(resp)
+            out[cid] = parse_chat(resp)
+        self.meta.model = self.meta.model or self.cfg.chat_model
+        return out
+
+
+def parse_chat(resp: dict):
+    try:
+        content = resp["choices"][0]["message"]["content"]
+        m = re.search(r"\{[^{}]*\}", content)
+        return _prob(json.loads(m.group(0)).get("p")) if m else None
+    except (KeyError, IndexError, TypeError, ValueError):
+        return None
+
+
+class StubJudge:
+    """Offline judge for --dry-run and tests. Deterministic per candidate id (or a given map)."""
+    name = "stub"
+
+    def __init__(self, probs: dict | None = None):
+        self.probs = probs
+        self.meta = JudgeMeta(model="stub")
+        self.calls = []
+
+    def ask(self, state: str, questions: dict) -> dict:
+        self.calls.append(dict(questions))
+        self.meta.requests += 1
+        if self.probs is not None:
+            return {cid: self.probs.get(cid) for cid in questions}
+        return {cid: int(hashlib.sha1(cid.encode()).hexdigest()[:4], 16) / 0xFFFF for cid in questions}
+
+
+def run(judge, candidates, level: int, goal: str):
+    """Two passes (filter_rules.md). Returns ({id: Judgement}, second_pass_count)."""
+    state = state_text(goal)
+    p1 = judge.ask(state, {c.id: question(level, c, README_P1) for c in candidates})
+    result = {cid: Judgement(p) for cid, p in p1.items()}
+
+    close = [c for c in candidates
+             if len(c.readme) > README_P1
+             and p1.get(c.id) is not None and CLOSE_FLOOR <= p1[c.id] < THRESHOLD]
+    if close:
+        p2 = judge.ask(state, {c.id: question(level, c, README_P2) for c in close})
+        for cid, p in p2.items():
+            if p is not None:
+                result[cid] = Judgement(p, passes=2)
+    return result, len(close)

@@ -32,6 +32,6 @@ README (first {n} chars): {readme[:n]}      ← line omitted when readme is empt
 
 ## Two passes (GitHub-backed items only)
 1. **Pass 1:** every candidate, with `n = 500`.
-2. **Pass 2:** only candidates with a README where pass 1 gave **0.50 ≤ P < 0.75** ("close"). Ask the same question again with `n = 1000`. **Pass 2's P replaces pass 1's**, so it can go up or down.
+2. **Pass 2:** only candidates whose cleaned README is longer than 500 chars (otherwise there's nothing new to show) and where pass 1 gave **0.50 ≤ P < 0.75** ("close"). Ask the same question again with `n = 1000`. **Pass 2's P replaces pass 1's**, so it can go up or down.
 3. P < 0.50 on pass 1 is a big NO: no second pass. P ≥ 0.75 already passes: no second pass.
 4. The 0.75 threshold is the same in both passes. The "close" band (0.50) is a cost knob, not a calibration knob.

@@ -1,0 +1,5 @@
+{"items": [
+ {"id": "vid001", "snippet": {"title": "I built a self-hosted alternative to a $20/mo SaaS in a weekend", "description": "Walkthrough of a small Go + SQLite app that replaces a paid uptime monitor. Code linked below.", "publishedAt": "2026-10-06T14:00:00Z", "channelTitle": "Solo Builder", "categoryId": "28"}, "statistics": {"viewCount": "480000"}},
+ {"id": "vid002", "snippet": {"title": "Celebrity reacts to viral dance trend", "description": "Pop star watches fan dance videos.", "publishedAt": "2026-10-06T20:00:00Z", "channelTitle": "Pop Daily", "categoryId": "24"}, "statistics": {"viewCount": "4000000"}},
+ {"id": "vid003", "snippet": {"title": "Which AI is smartest?", "description": "Comparing assistants on puzzles.", "publishedAt": "2026-10-05T16:00:00Z", "channelTitle": "Tech Clips", "categoryId": "28"}, "statistics": {"viewCount": "2900000"}}
+]}

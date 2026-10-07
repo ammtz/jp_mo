@@ -1,0 +1,5 @@
+{"total_count": 3, "items": [
+ {"full_name": "bigorg/web-framework", "html_url": "https://github.com/bigorg/web-framework", "description": "The web framework.", "stargazers_count": 220000, "created_at": "2014-05-01T00:00:00Z", "language": "JavaScript"},
+ {"full_name": "bigorg/agent-kit", "html_url": "https://github.com/bigorg/agent-kit", "description": "Toolkit for building small autonomous agents.", "stargazers_count": 41000, "created_at": "2025-11-01T00:00:00Z", "language": "Python"},
+ {"full_name": "bigorg/awesome-list", "html_url": "https://github.com/bigorg/awesome-list", "description": "A curated list of things.", "stargazers_count": 300000, "created_at": "2015-01-01T00:00:00Z", "language": null}
+]}

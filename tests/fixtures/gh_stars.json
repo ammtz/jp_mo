@@ -1,0 +1,6 @@
+{"total_count": 4, "items": [
+ {"full_name": "example/tiny-cron-ui", "html_url": "https://github.com/example/tiny-cron-ui", "description": "A 300-line self-hosted web UI to view and edit crontabs, with run history.", "stargazers_count": 2100, "created_at": "2026-10-02T09:00:00Z", "language": "Go"},
+ {"full_name": "example/pdf-diff", "html_url": "https://github.com/example/pdf-diff", "description": "Visual diff for PDFs in the terminal.", "stargazers_count": 900, "created_at": "2026-10-06T09:00:00Z", "language": "Rust"},
+ {"full_name": "example/awesome-prompts-2026", "html_url": "https://github.com/example/awesome-prompts-2026", "description": null, "stargazers_count": 3000, "created_at": "2026-10-01T09:00:00Z", "language": null},
+ {"full_name": "example/localfirst-notes", "html_url": "https://github.com/example/localfirst-notes", "description": "Local-first notes app with CRDT sync over plain files.", "stargazers_count": 640, "created_at": "2026-10-04T09:00:00Z", "language": "TypeScript"}
+]}

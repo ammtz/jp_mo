@@ -8,9 +8,9 @@ Runs daily at 7:00 AM ET. In code this is `python -m jp_mo build`; an agent foll
 4. **No candidates?** Write a "no edition" note (date, failed feeds) and stop. Don't calibrate.
 5. **Judge** (model): build the state and per-candidate questions from `context/filter_rules.md` at the current level. Call the judge (Jev by default), pass 1 for everything, then pass 2 for the "close" GitHub-backed items (see the two-pass rules in `filter_rules.md`). Record the final P(a) per candidate, which pass decided it, the model, and the total cost.
 6. **Select** (script): keep P(a) ≥ 0.75, then apply `context/sort_rules.md`.
-7. **Render** (script): write `editions/edition_YYYY-MM-DD.md` (format below).
+7. **Render** (script): write `{EDITION_DIR}/edition_YYYY-MM-DD.md` (format below). `--dry-run` writes `dryrun_YYYY-MM-DD.md` and never touches `state/`.
 8. **Calibrate** (script): apply `skills/calibrate_filter.md`, then save state and append to `state/log.jsonl`.
-9. **Deliver:** copy the file to `EDITION_DIR`. v1 does nothing else.
+9. **Deliver:** the file in `EDITION_DIR` is the delivery (point it at a synced folder). v1 does nothing else.
 
 ## Edition format
 ```markdown

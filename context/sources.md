@@ -14,8 +14,9 @@ The APIs can only sort by volume, so pools are deliberately wide (3 pages). Rank
 ## Momentum = velocity, not volume
 Totals barely move day to day. What matters is how fast something is growing, and new items grow fastest. Every feed uses the same rule:
 
-1. **Measured velocity (preferred):** `(metric_now - metric_prev) / days_between`, from `state/snapshots.json` (`{candidate id: {metric, at}}`), when the previous snapshot is 12-72 h old.
+1. **Measured velocity (preferred, all feeds except `pkg`):** `(metric_now - metric_prev) / days_between`, from `state/snapshots.json` (`{candidate id: {metric, at}}`), when the previous snapshot is 12-72 h old.
 2. **Average velocity (first sight, or a stale snapshot):** `metric_now / age_in_days`, where age counts from creation or publish (minimum 1 hour). For `pkg`, `metric_now` is the last-month download count and age is capped at 30 days.
+`pkg` always uses the average: its metric is a rolling last-month window, so a day-over-day difference measures acceleration, not velocity.
 3. Rewrite the snapshot for every candidate fetched, every run. Prune entries older than 30 days.
 
 | feed | metric | footer label |
