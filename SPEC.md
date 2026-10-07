@@ -10,7 +10,7 @@ What to build so `python -m jp_mo build` produces today's edition. Behavior live
 ## Layout
 ```
 jp_mo/
-  __main__.py        CLI: build [--date YYYY-MM-DD] [--dry-run] [--judge jev|chat]
+  __main__.py        CLI: build [--date YYYY-MM-DD] [--dry-run] [--judge jev|chat] | check
   config.py          load .env + env, validate required keys
   models.py          Candidate, Judgement, RunResult dataclasses
   sources/
@@ -30,6 +30,14 @@ tests/               offline only; fixtures in tests/fixtures/*.json
 .env.example
 ```
 `filter_rules.md` and `sort_rules.md` are the spec. Their ladder text and weights are copied into code as constants, and a test asserts the ladder in code matches the table in `filter_rules.md` (parse the markdown table), so the two can't drift.
+
+## Wiring check (`python -m jp_mo check`)
+Tests each interface in `.env.example` with one minimal live call and prints a table: `interface · key present · HTTP status · latency · note`. Never prints key values.
+- Gateway: one 1-question `/v1/evaluate` call (or 1 chat call when `JUDGE=chat`). **Required**: a failure here exits 1.
+- GitHub: `GET /rate_limit`. Shows search and core limits, plus the token's expiry from the `github-authentication-token-expiration` header, with a warning when it's under 14 days away.
+- YouTube: 1 `mostPopular` call with `maxResults=1`.
+- ecosyste.ms: 1 package-list call with `per_page=1`.
+- Optional feeds that fail are warnings (exit 0). A missing `STATE_DIR`/`EDITION_DIR` is created.
 
 ## Judge: Jev via Vercel AI Gateway
 Setup: run `npx vercel ai-gateway setup`, then make sure `AI_GATEWAY_API_KEY` ends up in `.env`. Use an **API key**, not a `VERCEL_OIDC_TOKEN`: OIDC tokens are short-lived and a 7AM unattended job will find them expired.
@@ -59,13 +67,14 @@ Authorization: Bearer {AI_GATEWAY_API_KEY}
 
 ## Done when (acceptance)
 1. `pytest` passes offline, covering: each source parser against a recorded fixture; dedupe/merge; momentum_pct; the threshold boundary (0.749 drops, 0.75 passes); sort and diversity; calibration (2-run streak, clamp, skip on failed feed); the ladder-matches-markdown test; velocity (measured from a 12-72 h snapshot, otherwise average over age; pkg age cap 30 d; min age 1 h; snapshot rewritten and pruned); 30-day seen window for gh_popular; Jev response parsing (`probability`, missing); README cleaning (badges/HTML/links stripped, 500/1,000 cuts); two-pass routing (0.49 → no pass 2, 0.50 and 0.749 → pass 2, 0.75 → no pass 2, no README → no pass 2, pass 2 overrides); and render output exactly matching a golden file.
-2. `python -m jp_mo build --dry-run` with fixtures and a stub judge writes a correct edition without network access.
-3. A live run with real keys writes `editions/edition_YYYY-MM-DD.md`, appends a log line, and finishes in < 3 min.
-4. Removing one feed's key still produces an edition, with that feed listed as failed.
-5. `grep` finds no owner name or email in the repo or in editions.
+2. `python -m jp_mo check` reports all four interfaces correctly, with the gateway required and the rest warnings.
+3. `python -m jp_mo build --dry-run` with fixtures and a stub judge writes a correct edition without network access.
+4. A live run with real keys writes `editions/edition_YYYY-MM-DD.md`, appends a log line, and finishes in < 3 min.
+5. Removing one feed's key still produces an edition, with that feed listed as failed.
+6. `grep` finds no owner name or email in the repo or in editions.
 
 ## Build order
-1. models, config, state → 2. sources + readme + fixtures → 3. normalize → 4. select, render → 5. judge (stub, then Jev, then chat) → 6. calibrate → 7. CLI + scheduler.
+1. models, config, state → 2. sources + readme + fixtures → 3. normalize → 4. select, render → 5. judge (stub, then Jev, then chat) → 6. calibrate → 7. CLI (`check` first, then `build`) + scheduler.
 
 ## Scheduling
 Any runner works. Linux cron: `CRON_TZ=America/New_York` / `0 7 * * * cd /path/jp_mo && python -m jp_mo build`. On macOS use a launchd `StartCalendarInterval` (Hour 7) and make sure the Mac's timezone is ET, or convert the hour.
