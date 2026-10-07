@@ -11,7 +11,7 @@ What to build so `python -m jp_mo build` produces today's edition. Behavior live
 ```
 jp_mo/
   __main__.py        CLI: build [--date YYYY-MM-DD] [--dry-run] [--judge jev|chat] | check
-  config.py          load .env + env, validate required keys
+  config.py          real env vars override .env (so cloud sessions need no file); validate required keys; never log values
   models.py          Candidate, Judgement, RunResult dataclasses
   sources/
     youtube.py       fetch() -> list[Candidate]

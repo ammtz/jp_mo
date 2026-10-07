@@ -4,6 +4,9 @@ Canonical instructions for any coding/chat agent (Claude, Kimi, Grok, Codex, etc
 
 A filtered, sorted morning newspaper. Read `VISION.md` first. What we know lives in `context/`; how we do things lives in `skills/`. Load the relevant files before any task. Assumptions are the enemy: if the answer isn't in the files, ask.
 
+## First run
+If `.env` doesn't exist and `AI_GATEWAY_API_KEY` isn't set in the environment, or the user says "set me up", follow `skills/setup.md` before anything else. Never print key values.
+
 ## Init (global variables, referenced by the filter question)
 - `USER_NAME`: [owner]   (placeholder on purpose; real name stays out of public files)
 - `USER_GOAL`: Come up with ideas and solutions I can personally implement and manage, solved through interviews. (DRAFT, owner to confirm)
@@ -27,6 +30,6 @@ Python backend. Frontend: JS/TS, HTML, CSS. Mobile welcome (Android/iOS, usable 
 
 ## Map
 - `context/`: sources.md, filter_rules.md, sort_rules.md, memory.md
-- `skills/`: edition_build.md, calibrate_filter.md
+- `skills/`: setup.md, edition_build.md, calibrate_filter.md
 - `SCHEDULED.md`: the 7AM job
 - `SPEC.md`: build spec (code layout, Jev call, acceptance)

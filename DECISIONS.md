@@ -20,6 +20,8 @@ Format: `YYYY-MM-DD: decision. Why.`
 - 2026-10-07: GitHub side = popular repos (more than 5k stars), star trends (new repos), and downloads (new GitHub-linked npm/PyPI packages).
 - 2026-10-07: Momentum is **velocity, not volume**, for every feed: growth per day from snapshots, falling back to total ÷ age. Pools are 3 pages wide because APIs sort by volume. Why: totals barely change; velocity surfaces new, rising items.
 
+- 2026-10-07: Setup is agent-driven (`skills/setup.md`, triggered by a missing `.env` or "set me up"). On desktop, keys are pasted into a local file the agent opens, never into chat. In the cloud, environment variables override `.env`; pasting into chat is the fallback. Why: an end user only needs Claude Code and a clone.
+
 ## Open
 - `USER_GOAL` is a draft in `AGENTS.md`.
 - Filter-question ladder is DRAFT; needs an owner interview.
