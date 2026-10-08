@@ -10,7 +10,7 @@ from jp_mo.models import Judgement
 from tests.conftest import NOW, cand
 
 DAY = date(2026, 10, 7)
-PAGE = "3f3e25c8-4dd1-805f-a426-e665d99d34b7"
+PAGE = "01234567-89ab-cdef-0123-456789abcdef"
 
 
 class FakeNotion:
@@ -41,7 +41,7 @@ class FakeNotion:
 
 
 def test_page_id_accepts_url_or_id():
-    url = "https://app.notion.com/p/someone/jp_mo-3f3e25c84dd1805fa426e665d99d34b7"
+    url = "https://app.notion.com/p/someone/jp_mo-0123456789abcdef0123456789abcdef"
     assert notion.page_id(url) == PAGE == notion.page_id(PAGE)
     with pytest.raises(ValueError):
         notion.page_id("nope")
