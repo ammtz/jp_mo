@@ -21,7 +21,10 @@ jp_mo/
     packages.py
     readme.py        fetch + clean README to <=1,000 chars
   normalize.py       dedupe/merge, seen-filter, momentum_pct
-  judge.py           Judge protocol; JevJudge, ChatJudge
+  judge.py           JevJudge, ChatJudge, StubJudge; ladder; two-pass run()
+  pipeline.py        one edition end to end
+  net.py             stdlib HTTP (swappable)
+  dryrun.py          FixtureHttp: serves tests/fixtures for --dry-run
   select.py          threshold 0.75 (constant, not config), sort, diversity
   render.py          edition + "no edition" markdown
   calibrate.py       level rule from skills/calibrate_filter.md

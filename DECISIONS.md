@@ -24,6 +24,8 @@ Format: `YYYY-MM-DD: decision. Why.`
 
 - 2026-10-07: PR review = two booleans on line 1 (`skills/pr.md`): Complete (fully wired, no stubs) and Irreversible (not undoable by revert). 🟢 merge / 🟡 read / 🔴 not ready. Adapted from Matt Pocock's `pr` skill (MIT). Why: the owner reviews in one line.
 
+- 2026-10-07: Packages from one monorepo stay separate and get no repo README; merged items keep the longest seen window; one edition per day (`--force` to rebuild); the log keeps per-item P and a P histogram. Why: findings from a context-free review of PR #2.
+
 ## Open
 - `USER_GOAL` is a draft in `AGENTS.md`.
 - Filter-question ladder is DRAFT; needs an owner interview.

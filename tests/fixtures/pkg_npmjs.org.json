@@ -1,0 +1,5 @@
+[
+ {"name": "tiny-cron-ui", "description": "Crontab web UI", "repository_url": "https://github.com/example/tiny-cron-ui", "registry_url": "https://www.npmjs.com/package/tiny-cron-ui", "downloads": 52000, "downloads_period": "last-month", "first_release_published_at": "2026-10-02T10:00:00Z"},
+ {"name": "quote-js-string", "description": "Quote a JS string safely.", "repository_url": "https://github.com/someone/quote-js-string.git", "registry_url": "https://www.npmjs.com/package/quote-js-string", "downloads": 6383768, "downloads_period": "last-month", "first_release_published_at": "2026-09-12T13:42:10Z"},
+ {"name": "no-github-pkg", "description": "Hosted elsewhere.", "repository_url": "https://gitlab.com/x/y", "registry_url": "https://www.npmjs.com/package/no-github-pkg", "downloads": 90000, "downloads_period": "last-month", "first_release_published_at": "2026-09-20T00:00:00Z"}
+]
