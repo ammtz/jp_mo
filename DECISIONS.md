@@ -28,5 +28,7 @@ Format: `YYYY-MM-DD: decision. Why.`
 
 - 2026-10-07: Calibration round 1. `USER_GOAL` is now this system: a personal newsletter, graded note by note, that improves itself. Jev's state describes the system; level 0 = v7 (apply-to-the-system question with novelty as an exclusion): 81% pair ordering vs 61% before, no BAD items passing. Why: the owner's grades (`context/calibration_log.md`).
 
+- 2026-10-07: The owner calibration loop runs weekly at most (Mondays), and only after 20 or more new grades. The daily automatic level step stays. Why: more often is too much for the owner.
+
 ## Open
 - Agent curator (writes each news note as a specific way to apply the item to this system) and per-note GREAT/GOOD/BAD grading that feeds the next calibration round. Owner's direction, 2026-10-07.

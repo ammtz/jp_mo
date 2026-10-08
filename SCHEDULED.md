@@ -17,5 +17,5 @@ Notes:
 - A run with no reachable feeds produces a short "no edition" note, not an empty paper.
 - Calibration level and log must persist somewhere writable (`state/`, gitignored; see `SPEC.md`).
 
-## Optional: weekly check, Mondays
-> Review the last 7 footers. Report average `passed`, level changes, any feed that failed more than twice, and one proposed change to the question or sources. Max 5 bullets.
+## Weekly check + calibration loop, Mondays
+> Review the last 7 footers. Report average `passed`, level changes, any feed that failed more than twice, and one proposed change to the question or sources. Max 5 bullets. If at least 20 new grades have come in since the last round, run the calibration loop in `skills/calibrate_filter.md`; otherwise say "calibration: waiting for grades (n/20)".
