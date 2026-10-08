@@ -4,7 +4,7 @@ Runs daily at 7:00 AM ET. In code this is `python -m jp_mo build`; an agent foll
 
 One edition per day: if the day already has a successful edition, `build` exits without changes. `--force` rebuilds it (re-opening that day's printed items, without counting it toward calibration again). A day that only got a "no edition" note can be retried freely.
 
-1. **Load:** read `.env`, `state/state.json` (create with `level: 0` if missing), and `context/*.md`. Harvest the owner's grades from past editions into `state/grades.json`.
+1. **Load:** read `.env`, `state/state.json` (create with `level: 0` if missing), and `context/*.md`. Harvest the owner's grades (edition files, then Notion) into `state/grades.json`.
 2. **Fetch** (script): every feed in `context/sources.md`, with a 20 s timeout per request and 1 retry. Record failed feeds.
 3. **Normalize + dedupe** (script): as described in `sources.md`.
 4. **No candidates?** Write a "no edition" note (date, failed feeds) and stop. Don't calibrate.
@@ -13,7 +13,7 @@ One edition per day: if the day already has a successful edition, `build` exits 
 6b. **Curate** (model): the curator writes one news note per printed item: what it is, and the concrete way to apply it to this system (see `SPEC.md`). If it fails, fall back to the plain blurb.
 7. **Render** (script): write `{EDITION_DIR}/edition_YYYY-MM-DD.md` (format below). `--dry-run` writes `dryrun_YYYY-MM-DD.md` and never touches `state/`.
 8. **Calibrate** (script): apply `skills/calibrate_filter.md`, then save state and append to `state/log.jsonl` (including each printed item's P and a 10-bin histogram of all final P values).
-9. **Deliver:** the file in `EDITION_DIR` is the delivery (point it at a synced folder). v1 does nothing else.
+9. **Deliver:** the file in `EDITION_DIR` always exists. If Notion is configured, the notes are also added to the "jp_mo notes" database, where the owner reads and grades them (see `SPEC.md`).
 
 ## Edition format
 ```markdown

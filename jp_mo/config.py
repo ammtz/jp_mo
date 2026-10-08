@@ -45,6 +45,8 @@ class Config:
     curator_model: str
     github_token: str
     youtube_key: str
+    notion_token: str
+    notion_page: str
     edition_dir: Path
     state_dir: Path
     goal: str
@@ -75,6 +77,8 @@ def load(root: Path | None = None, environ: dict | None = None) -> Config:
         curator_model=get("CURATOR_MODEL", "moonshotai/kimi-k3"),
         github_token=get("GITHUB_TOKEN"),
         youtube_key=get("YOUTUBE_API_KEY"),
+        notion_token=get("NOTION_TOKEN"),
+        notion_page=get("NOTION_PAGE_ID"),
         edition_dir=(root / get("EDITION_DIR", "./editions")).resolve(),
         state_dir=(root / get("STATE_DIR", "./state")).resolve(),
         goal=read_goal(root / "AGENTS.md"),
