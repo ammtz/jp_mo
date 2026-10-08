@@ -13,12 +13,19 @@ from datetime import date, datetime, timezone
 from urllib.parse import urlencode
 from zoneinfo import ZoneInfo
 
-from . import config, curator as curating, grades, judge as judging, pipeline
+from . import config, curator as curating, grades, judge as judging, notion as notioning, pipeline
 from .dryrun import FixtureHttp
 from .net import Http
 from .sources.github import API as GITHUB_API, headers as github_headers
 
 ET = ZoneInfo("America/New_York")
+
+
+def make_notion(cfg):
+    if not (cfg.notion_token and cfg.notion_page):
+        return None
+    cfg.notion_page = notioning.page_id(cfg.notion_page)
+    return notioning.Notion(Http(timeout=30, retries=1), cfg.notion_token)
 
 
 def make_judge(cfg, name):
@@ -44,7 +51,8 @@ def cmd_build(args) -> int:
         curator = None if args.no_curator else curating.Curator(cfg, Http(timeout=120, retries=0))
         readme_http = Http(timeout=10, retries=0)   # READMEs fail fast; the step has its own budget
     summary = pipeline.build(cfg, http, judge, now, day, dry_run=args.dry_run, force=args.force,
-                             curator=curator, readme_http=readme_http)
+                             curator=curator, readme_http=readme_http,
+                             notion=None if args.dry_run else make_notion(cfg))
     return 0 if summary["status"] in ("ok", "skipped: already built") else 1
 
 
@@ -57,6 +65,12 @@ def last_round(cfg):
 def cmd_grades(args) -> int:
     cfg = config.load()
     g = grades.harvest(cfg.edition_dir)
+    nt = make_notion(cfg)
+    if nt:
+        try:
+            g.update(nt.harvest(nt.ensure_db(cfg.notion_page), datetime.now(timezone.utc).astimezone(ET).date()))
+        except Exception as e:
+            print(f"notion grades: FAILED ({e})", file=sys.stderr)
     grades.save(cfg.state_dir, g)
     since = last_round(cfg)
     new = grades.count_since(g, since)
@@ -125,6 +139,13 @@ def cmd_check(args) -> int:
         q = urlencode({"part": "id", "chart": "mostPopular", "regionCode": "US", "maxResults": 1, "key": cfg.youtube_key})
         http.get_json("https://www.googleapis.com/youtube/v3/videos?" + q)
 
+    def notion_check():
+        nt = make_notion(cfg)
+        if not nt:
+            raise RuntimeError("NOTION_TOKEN / NOTION_PAGE_ID not set (delivery off; edition stays a file)")
+        db = nt.ensure_db(cfg.notion_page)
+        return f"database ready ({db[:8]}…)"
+
     def ecosystems():
         http.get_json("https://packages.ecosyste.ms/api/v1/registries/npmjs.org/packages?per_page=1")
 
@@ -133,6 +154,7 @@ def cmd_check(args) -> int:
         ("GitHub", cfg.github_token, False, github),
         ("YouTube", cfg.youtube_key, False, youtube),
         ("ecosyste.ms", "n/a", False, ecosystems),
+        ("Notion (delivery)", cfg.notion_token, False, notion_check),
     ]:
         status, latency, note = timed(fn)
         if status == "FAIL" and not required:

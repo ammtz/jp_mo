@@ -4,6 +4,7 @@ import time
 from datetime import date, datetime
 
 from . import calibrate, grades, judge as judging, normalize, readme, render, select, velocity
+from .models import SOURCE_LABELS
 from .sources import FEEDS
 from .state import State
 
@@ -16,7 +17,7 @@ def log(msg: str):
 
 
 def build(cfg, http, judge, now: datetime, day: date, dry_run: bool = False, force: bool = False,
-          curator=None, readme_http=None) -> dict:
+          curator=None, readme_http=None, notion=None) -> dict:
     """Returns the run summary (also the log line). Writes the edition or a no-edition note."""
     _T0[0] = time.monotonic()
     state = State(cfg.state_dir, persist=not dry_run)
@@ -31,9 +32,20 @@ def build(cfg, http, judge, now: datetime, day: date, dry_run: bool = False, for
     if rebuild:
         state.unmark_day(day)
 
-    # 0. harvest the owner's grades from past editions (files are the source of truth)
+    # 0. harvest the owner's grades: edition files, then Notion (Notion wins on conflict)
+    notion_db = None
+    if notion is not None and not dry_run:
+        try:
+            notion_db = notion.ensure_db(cfg.notion_page)
+        except Exception as e:
+            log(f"notion: FAILED ({e})")
     if not dry_run:
         harvested = grades.harvest(cfg.edition_dir)
+        if notion_db:
+            try:
+                harvested.update(notion.harvest(notion_db, day))
+            except Exception as e:
+                log(f"notion grades: FAILED ({e})")
         grades.save(cfg.state_dir, harvested)
         log(f"grades: {len(harvested)} on file")
 
@@ -112,6 +124,17 @@ def build(cfg, http, judge, now: datetime, day: date, dry_run: bool = False, for
     stats = {**summary, "level": level, "recalibrate": core.get("recalibrate")}
     path = write(cfg, day, render.edition(day, top, judgements, stats, notes), dry_run)
     log(f"edition: {path} ({len(top)} items, {len(passed)} passed of {scanned})")
+
+    # 7b. deliver to Notion (never blocks: the file edition already exists)
+    if notion_db:
+        try:
+            label = lambda c: " + ".join(SOURCE_LABELS[s] for s in c.sources)
+            n = notion.push(notion_db, day, top, judgements, notes, label, mention=notion.owner())
+            summary["delivered"] = "notion"
+            log(f"notion: {n} notes delivered")
+        except Exception as e:
+            summary["delivered"] = "notion failed"
+            log(f"notion: FAILED ({e})")
 
     state.core = core
     state.mark_seen(top, day)

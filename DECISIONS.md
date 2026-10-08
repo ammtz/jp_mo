@@ -32,4 +32,7 @@ Format: `YYYY-MM-DD: decision. Why.`
 
 - 2026-10-07: Agent curator writes each news note (what it is, plus the concrete change to this system) with Kimi K3 via the gateway, about $0.07 per edition. Grades live in the edition files (tick boxes, or `jp_mo grade`) and are harvested every build. Why: the owner wants specific implementation notes and wants to grade each one.
 
+- 2026-10-07: Delivery is Notion: one database row per note, with a one-tap Grade select read back every build (no expiry), and the first row @mentions the owner for a push. Chosen over Telegram (24h update expiry), email and Slack (grading needs a server), and WhatsApp and SMS (cost, no formatting). The markdown file stays as the fallback.
+
 ## Open
+- Unattended daily run: proposed GitHub Actions cron (free; state in a private gist) instead of a server. Pending owner confirmation.

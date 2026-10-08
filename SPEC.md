@@ -25,6 +25,7 @@ jp_mo/
   pipeline.py        one edition end to end
   curator.py         agent curator: one chat call writes a news note per printed item
   grades.py          owner grades: tick boxes in edition files, harvested to state/grades.json
+  notion.py          delivery: one Notion database row per note; Grade select read back each build
   net.py             stdlib HTTP (swappable)
   dryrun.py          FixtureHttp: serves tests/fixtures for --dry-run
   select.py          threshold 0.75 (constant, not config), sort, diversity
@@ -49,6 +50,9 @@ One `POST /v1/chat/completions` call per edition with `CURATOR_MODEL` (default `
 
 ## Grading
 Each note ends with `Grade: [ ] great [ ] good [ ] bad` and a hidden `<!-- id: … -->`. The owner ticks one box in any editor (synced folder, phone), or runs `python -m jp_mo grade 1=great 2=bad` (an agent can run this from chat). Every build, and `python -m jp_mo grades`, harvests all `edition_*.md` into `state/grades.json` (`{"date|id": grade}`). The edition files stay the source of truth. `grades` also reports calibration-loop readiness (20 new grades since the last round in `context/calibration_log.md`).
+
+## Delivery: Notion
+When `NOTION_TOKEN` and `NOTION_PAGE_ID` are set, each build ensures a "jp_mo notes" database under that page (created on first use), archives the day's **ungraded** rows (so `--force` doesn't duplicate; graded rows are never touched), and adds one row per printed note: Note, Date, What, For jp_mo, Effort, Effect, Source, P, Link, Item ID, and an empty **Grade** select (GREAT/GOOD/BAD). The first row @mentions the workspace's only person, for a push notification. Grades are harvested every build (last 60 days) and merged over file grades. Plain HTTP, API version `2022-06-28`. Failures never block the edition: the file still exists, and the log says `delivered: notion failed`.
 
 ## Judge: Jev via Vercel AI Gateway
 Setup: run `npx vercel ai-gateway setup`, then make sure `AI_GATEWAY_API_KEY` ends up in `.env`. Use an **API key**, not a `VERCEL_OIDC_TOKEN`: OIDC tokens are short-lived and a 7AM unattended job will find them expired.

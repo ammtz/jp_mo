@@ -57,7 +57,7 @@ Run `python -m jp_mo build` and show the edition. Explain: "Tomorrow's ranking w
 - **Windows:** `schtasks /create /sc daily /st 07:00 ...` adjusted to ET.
 - **Cloud/phone only:** a scheduled cloud agent can run the build, but each run starts fresh. Velocity falls back to averages and calibration stays at level 0. Say this plainly and recommend a desktop or always-on machine for the full experience.
 
-Ask where editions should land (`EDITION_DIR`). A synced folder (iCloud Drive, Dropbox) makes them readable on a phone.
+Ask how they want to read and grade. Recommended: **Notion** (`NOTION_TOKEN` + `NOTION_PAGE_ID`, see `.env.example`): notes land in a database on their phone, with a one-tap Grade. Otherwise point `EDITION_DIR` at a synced folder (iCloud Drive, Dropbox) and grade by ticking boxes in the file.
 
 ### 8. Wrap up
 In 3 lines or fewer: what's working, what's skipped (missing optional keys), and when the next edition arrives. Don't commit or push anything.
