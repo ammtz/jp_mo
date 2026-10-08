@@ -26,6 +26,7 @@ Format: `YYYY-MM-DD: decision. Why.`
 
 - 2026-10-07: Packages from one monorepo stay separate and get no repo README; merged items keep the longest seen window; one edition per day (`--force` to rebuild); the log keeps per-item P and a P histogram. Why: findings from a context-free review of PR #2.
 
+- 2026-10-07: Calibration round 1. `USER_GOAL` is now this system: a personal newsletter, graded note by note, that improves itself. Jev's state describes the system; level 0 = v7 (apply-to-the-system question with novelty as an exclusion): 81% pair ordering vs 61% before, no BAD items passing. Why: the owner's grades (`context/calibration_log.md`).
+
 ## Open
-- `USER_GOAL` is a draft in `AGENTS.md`.
-- Filter-question ladder is DRAFT; needs an owner interview.
+- Agent curator (writes each news note as a specific way to apply the item to this system) and per-note GREAT/GOOD/BAD grading that feeds the next calibration round. Owner's direction, 2026-10-07.

@@ -9,7 +9,7 @@ If `.env` doesn't exist and `AI_GATEWAY_API_KEY` isn't set in the environment, o
 
 ## Init (global variables, referenced by the filter question)
 - `USER_NAME`: [owner]   (placeholder on purpose; real name stays out of public files)
-- `USER_GOAL`: Come up with ideas and solutions I can personally implement and manage, solved through interviews. (DRAFT, owner to confirm)
+- `USER_GOAL`: A personal morning newsletter, graded note by note, that improves itself over time through an agent curator and Jev. (confirmed 2026-10-07 in calibration round 1)
 
 ## Stack
 Python backend. Frontend: JS/TS, HTML, CSS. Mobile welcome (Android/iOS, usable on an iPad or Surface-class tablet). Prefer small, boring, single-owner-maintainable choices.
@@ -30,7 +30,7 @@ Python backend. Frontend: JS/TS, HTML, CSS. Mobile welcome (Android/iOS, usable 
 7. Every PR body follows `skills/pr.md`: the first line answers **Complete** and **Irreversible**.
 
 ## Map
-- `context/`: sources.md, filter_rules.md, sort_rules.md, memory.md
+- `context/`: sources.md, filter_rules.md, sort_rules.md, calibration_log.md, memory.md
 - `skills/`: setup.md, edition_build.md, calibrate_filter.md, pr.md
 - `SCHEDULED.md`: the 7AM job
 - `SPEC.md`: build spec (code layout, Jev call, acceptance)
