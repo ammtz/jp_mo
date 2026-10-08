@@ -34,5 +34,6 @@ Format: `YYYY-MM-DD: decision. Why.`
 
 - 2026-10-07: Delivery is Notion: one database row per note, with a one-tap Grade select read back every build (no expiry), and the first row @mentions the owner for a push. Chosen over Telegram (24h update expiry), email and Slack (grading needs a server), and WhatsApp and SMS (cost, no formatting). The markdown file stays as the fallback.
 
+- 2026-10-07: Unattended run = GitHub Actions cron (10:30 UTC) with state in Upstash Redis (REST, free tier); local files remain the default when Redis isn't set. Not a gist ("GitHub as a database is the worst"), not a server. GitHub calls use the workflow token.
+
 ## Open
-- Unattended daily run: proposed GitHub Actions cron (free; state in a private gist) instead of a server. Pending owner confirmation.

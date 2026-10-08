@@ -31,7 +31,7 @@ jp_mo/
   select.py          threshold 0.75 (constant, not config), sort, diversity
   render.py          edition + "no edition" markdown
   calibrate.py       level rule from skills/calibrate_filter.md
-  state.py           state/state.json, state/log.jsonl, state/seen.json, state/snapshots.json
+  state.py           State over a FileStore (STATE_DIR) or RedisStore (Upstash REST): state, log, seen, snapshots, grades
 tests/               offline only; fixtures in tests/fixtures/*.json
 .env.example
 ```
@@ -92,4 +92,6 @@ Authorization: Bearer {AI_GATEWAY_API_KEY}
 1. models, config, state → 2. sources + readme + fixtures → 3. normalize → 4. select, render → 5. judge (stub, then Jev, then chat) → 6. calibrate → 7. CLI (`check` first, then `build`) + scheduler.
 
 ## Scheduling
-Any runner works. Linux cron: `CRON_TZ=America/New_York` / `0 7 * * * cd /path/jp_mo && python -m jp_mo build`. On macOS use a launchd `StartCalendarInterval` (Hour 7) and make sure the Mac's timezone is ET, or convert the hour.
+**Default: GitHub Actions** (`.github/workflows/edition.yml`): daily at 10:30 UTC (6:30 ET summer / 5:30 ET winter), plus a manual "Run workflow" button with a `force` option. It runs `check`, then `build`, and keeps the markdown edition as a 30-day artifact. State lives in **Upstash Redis** (`UPSTASH_REDIS_REST_URL/TOKEN`); notes go to Notion; GitHub calls use the workflow's own token. Keys are repo secrets. GitHub may start scheduled runs 5-30 minutes late, and it disables schedules in public repos after 60 days without commits (re-enable in the Actions tab).
+
+Local alternative: Any runner works. Linux cron: `CRON_TZ=America/New_York` / `0 7 * * * cd /path/jp_mo && python -m jp_mo build`. On macOS use a launchd `StartCalendarInterval` (Hour 7) and make sure the Mac's timezone is ET, or convert the hour.

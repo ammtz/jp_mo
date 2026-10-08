@@ -3,10 +3,9 @@
     Grade: [x] great [ ] good [ ] bad
     <!-- id: gh_stars:owner/name -->
 
-`harvest` reads every edition in EDITION_DIR into state/grades.json ({"date|id": grade}), so the
-files stay the source of truth and grading works from any text editor or synced folder.
+`harvest` reads every edition in EDITION_DIR into {"date|id": grade} (saved by the state store), so
+the files stay a source of truth and grading works from any text editor or synced folder.
 """
-import json
 import re
 from datetime import date
 from pathlib import Path
@@ -48,11 +47,6 @@ def harvest(edition_dir: Path) -> dict:
             if g:
                 grades[f"{m.group(1)}|{cid}"] = g
     return grades
-
-
-def save(state_dir: Path, grades: dict):
-    state_dir.mkdir(parents=True, exist_ok=True)
-    (state_dir / "grades.json").write_text(json.dumps(grades, indent=1, sort_keys=True))
 
 
 def count_since(grades: dict, since: date | None) -> int:

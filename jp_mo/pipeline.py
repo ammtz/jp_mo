@@ -17,10 +17,10 @@ def log(msg: str):
 
 
 def build(cfg, http, judge, now: datetime, day: date, dry_run: bool = False, force: bool = False,
-          curator=None, readme_http=None, notion=None) -> dict:
+          curator=None, readme_http=None, notion=None, store=None) -> dict:
     """Returns the run summary (also the log line). Writes the edition or a no-edition note."""
     _T0[0] = time.monotonic()
-    state = State(cfg.state_dir, persist=not dry_run)
+    state = State(cfg.state_dir, persist=not dry_run, store=store)
     level = state.core.get("level", 0)
 
     # A day gets one edition. Rebuilding needs --force: it re-opens that day's printed items and
@@ -46,7 +46,7 @@ def build(cfg, http, judge, now: datetime, day: date, dry_run: bool = False, for
                 harvested.update(notion.harvest(notion_db, day))
             except Exception as e:
                 log(f"notion grades: FAILED ({e})")
-        grades.save(cfg.state_dir, harvested)
+        state.save_grades(harvested)
         log(f"grades: {len(harvested)} on file")
 
     # 1. fetch (script)

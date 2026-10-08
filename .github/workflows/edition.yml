@@ -1,0 +1,52 @@
+# Daily unattended edition. State lives in Upstash Redis; notes go to Notion.
+# Secrets (Settings -> Secrets and variables -> Actions): AI_GATEWAY_API_KEY, YOUTUBE_API_KEY,
+# NOTION_TOKEN, NOTION_PAGE_ID, UPSTASH_REDIS_REST_URL, UPSTASH_REDIS_REST_TOKEN.
+# GitHub API calls use the workflow's own token (no personal token to expire).
+name: edition
+
+on:
+  schedule:
+    - cron: "30 10 * * *"   # 10:30 UTC = 6:30 ET (summer) / 5:30 ET (winter): always before 7
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "Rebuild today's edition even if it exists"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: edition
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      AI_GATEWAY_API_KEY: ${{ secrets.AI_GATEWAY_API_KEY }}
+      YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+      NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+      NOTION_PAGE_ID: ${{ secrets.NOTION_PAGE_ID }}
+      UPSTASH_REDIS_REST_URL: ${{ secrets.UPSTASH_REDIS_REST_URL }}
+      UPSTASH_REDIS_REST_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}
+      GITHUB_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Check wiring
+        run: python -m jp_mo check
+      - name: Build edition
+        run: python -m jp_mo build ${{ inputs.force && '--force' || '' }}
+      - name: Keep the markdown edition (30 days)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: edition-${{ github.run_id }}
+          path: editions/
+          retention-days: 30
+          if-no-files-found: ignore
