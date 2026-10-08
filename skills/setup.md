@@ -51,7 +51,7 @@ Then run `python -m jp_mo check` and show its table.
 Run `python -m jp_mo build` and show the edition. Explain: "Tomorrow's ranking will be sharper; velocity needs one day of history." Then explain grading: tick one box per note in the file, or tell the agent "grade 1 great, 2 bad" (it runs `python -m jp_mo grade 1=great 2=bad`). Grades drive the weekly calibration loop.
 
 ### 7. Schedule (ask, don't assume)
-"Want this every day at 7AM ET?"
+"Want this every day at 7AM ET?" Recommended: **GitHub Actions + Upstash Redis + Notion**, with no machine left on. Steps: create the Upstash database (see `.env.example`), add its URL and token to `.env`, run `check`, then set the repo secrets from `.env` with `gh secret set NAME` (pipe the values; never echo them), and trigger the workflow once from the Actions tab. Local alternatives:
 - **macOS:** write `~/Library/LaunchAgents/com.jp_mo.morning.plist` (`StartCalendarInterval` Hour 7 converted to local time, `WorkingDirectory` = repo, `ProgramArguments` = python3 -m jp_mo build), then `launchctl load` it.
 - **Linux:** add a crontab line with `CRON_TZ=America/New_York`.
 - **Windows:** `schtasks /create /sc daily /st 07:00 ...` adjusted to ET.
