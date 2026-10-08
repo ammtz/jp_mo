@@ -4,6 +4,7 @@ from datetime import date
 from jp_mo import config, pipeline, render
 from jp_mo.dryrun import FixtureHttp
 from jp_mo.judge import StubJudge
+from jp_mo.curator import Note
 from jp_mo.models import Judgement
 from jp_mo.net import HttpError
 from tests.conftest import NOW, ROOT, cand
@@ -17,8 +18,9 @@ def test_render_matches_golden():
     b = cand("yt:v", "yt", momentum=50000, summary="word " * 60)
     b.title, b.url = "A video", "https://www.youtube.com/watch?v=v"
     stats = {"scanned": 412, "second_pass": 9, "passed": 10, "level": 0, "feeds_failed": [],
-             "judge_model": "typesafe-ai/jev", "cost_usd": 0.0049}
-    text = render.edition(DAY, [a, b], {a.id: Judgement(0.91), b.id: Judgement(0.8)}, stats)
+             "judge_model": "typesafe-ai/jev", "curator_model": "moonshotai/kimi-k3", "cost_usd": 0.0449}
+    notes = {a.id: Note("A tiny thing.", "Swap it into jp_mo/net.py to drop retries code.", "S", "simpler")}
+    text = render.edition(DAY, [a, b], {a.id: Judgement(0.91), b.id: Judgement(0.8)}, stats, notes)
     assert text == (ROOT / "tests" / "fixtures" / "golden_edition.md").read_text()
 
 

@@ -23,5 +23,7 @@ FSL-1.1-MIT (`LICENSE.md`): becomes MIT two years after each release.
 python -m jp_mo check            # verify every key/interface
 python -m jp_mo build            # today's edition -> editions/
 python -m jp_mo build --dry-run  # offline: fixtures + stub judge, no state writes
+python -m jp_mo grade 1=great 2=bad   # grade today's notes (or tick boxes in the file)
+python -m jp_mo grades           # totals + whether the weekly calibration loop is ready
 ```
 Python 3.11+, standard library only. Tests: `pip install -r requirements-dev.txt && python -m pytest`.

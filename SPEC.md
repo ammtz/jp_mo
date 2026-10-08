@@ -10,7 +10,7 @@ What to build so `python -m jp_mo build` produces today's edition. Behavior live
 ## Layout
 ```
 jp_mo/
-  __main__.py        CLI: build [--date YYYY-MM-DD] [--dry-run] [--judge jev|chat] | check
+  __main__.py        CLI: build [--date] [--dry-run] [--judge jev|chat] [--force] [--no-curator] | grade | grades | check
   config.py          real env vars override .env (so cloud sessions need no file); validate required keys; never log values
   models.py          Candidate, Judgement, RunResult dataclasses
   sources/
@@ -23,6 +23,8 @@ jp_mo/
   normalize.py       dedupe/merge, seen-filter, momentum_pct
   judge.py           JevJudge, ChatJudge, StubJudge; ladder; two-pass run()
   pipeline.py        one edition end to end
+  curator.py         agent curator: one chat call writes a news note per printed item
+  grades.py          owner grades: tick boxes in edition files, harvested to state/grades.json
   net.py             stdlib HTTP (swappable)
   dryrun.py          FixtureHttp: serves tests/fixtures for --dry-run
   select.py          threshold 0.75 (constant, not config), sort, diversity
@@ -41,6 +43,12 @@ Tests each interface in `.env.example` with one minimal live call and prints a t
 - YouTube: 1 `mostPopular` call with `maxResults=1`.
 - ecosyste.ms: 1 package-list call with `per_page=1`.
 - Optional feeds that fail are warnings (exit 0). A missing `STATE_DIR`/`EDITION_DIR` is created.
+
+## Curator (agent, after select)
+One `POST /v1/chat/completions` call per edition with `CURATOR_MODEL` (default `moonshotai/kimi-k3`). The prompt carries the system brief (`USER_GOAL`, `VISION.md`, and this file's Layout block) plus the printed items, and asks for JSON notes: `what` (one sentence), `apply` (the concrete change to this system: module, file, step), `effort` S/M/L, `effect` sellable/efficient/simpler. Malformed entries are dropped. Any failure falls back to the plain blurb and the footer says `curator failed`, so it never blocks an edition. Cost is read from `usage.cost`. Live 2026-10-07: 5 notes, about $0.067.
+
+## Grading
+Each note ends with `Grade: [ ] great [ ] good [ ] bad` and a hidden `<!-- id: … -->`. The owner ticks one box in any editor (synced folder, phone), or runs `python -m jp_mo grade 1=great 2=bad` (an agent can run this from chat). Every build, and `python -m jp_mo grades`, harvests all `edition_*.md` into `state/grades.json` (`{"date|id": grade}`). The edition files stay the source of truth. `grades` also reports calibration-loop readiness (20 new grades since the last round in `context/calibration_log.md`).
 
 ## Judge: Jev via Vercel AI Gateway
 Setup: run `npx vercel ai-gateway setup`, then make sure `AI_GATEWAY_API_KEY` ends up in `.env`. Use an **API key**, not a `VERCEL_OIDC_TOKEN`: OIDC tokens are short-lived and a 7AM unattended job will find them expired.
