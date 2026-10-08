@@ -11,10 +11,19 @@ def log(msg: str):
     print(msg, file=sys.stderr)
 
 
-def build(cfg, http, judge, now: datetime, day: date, dry_run: bool = False) -> dict:
+def build(cfg, http, judge, now: datetime, day: date, dry_run: bool = False, force: bool = False) -> dict:
     """Returns the run summary (also the log line). Writes the edition or a no-edition note."""
     state = State(cfg.state_dir, persist=not dry_run)
     level = state.core.get("level", 0)
+
+    # A day gets one edition. Rebuilding needs --force: it re-opens that day's printed items and
+    # doesn't count toward calibration again.
+    rebuild = not dry_run and state.logged_ok(day)
+    if rebuild and not force:
+        log(f"edition for {day} already built; use --force to rebuild it")
+        return {"date": day.isoformat(), "status": "skipped: already built"}
+    if rebuild:
+        state.unmark_day(day)
 
     # 1. fetch (script)
     candidates, failed = [], []
@@ -36,7 +45,8 @@ def build(cfg, http, judge, now: datetime, day: date, dry_run: bool = False) -> 
 
     summary = {"date": day.isoformat(), "scanned": scanned, "passed": 0, "second_pass": 0,
                "level_before": level, "level_after": level, "feeds_failed": failed,
-               "judge_model": judge.meta.model or judge.name, "cost_usd": 0.0, "errors": 0}
+               "judge_model": judge.meta.model or judge.name, "cost_usd": 0.0, "errors": 0,
+               "rebuild": rebuild}
 
     def no_edition(reason):
         write(cfg, day, render.no_edition(day, reason, failed), dry_run)
@@ -67,8 +77,11 @@ def build(cfg, http, judge, now: datetime, day: date, dry_run: bool = False) -> 
     top = select.pick(passed, judgements)
     summary["passed"] = len(passed)
 
-    # 6. calibrate (script): skip when a feed failed
-    core = calibrate.step(state.core, len(passed), eligible=not failed)
+    summary["printed"] = [{"id": c.id, "p": round(judgements[c.id].p, 4), "pass": judgements[c.id].passes} for c in top]
+    summary["p_hist"] = histogram(j.p for j in judgements.values() if j.p is not None)
+
+    # 6. calibrate (script): skip when a feed failed or the day was already counted
+    core = calibrate.step(state.core, len(passed), eligible=not failed and not rebuild)
     summary["level_after"] = core["level"]
     stats = {**summary, "level": level, "recalibrate": core.get("recalibrate")}
     path = write(cfg, day, render.edition(day, top, judgements, stats), dry_run)
@@ -80,6 +93,14 @@ def build(cfg, http, judge, now: datetime, day: date, dry_run: bool = False) -> 
     state.append_log(summary)
     state.save()
     return summary
+
+
+def histogram(ps) -> list:
+    """Final P counts in 10 bins: [0-0.1), ..., [0.9-1.0]."""
+    bins = [0] * 10
+    for p in ps:
+        bins[min(int(p * 10), 9)] += 1
+    return bins
 
 
 def write(cfg, day: date, text: str, dry_run: bool):

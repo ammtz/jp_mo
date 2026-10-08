@@ -1,4 +1,4 @@
-"""CLI: python -m jp_mo build [--date YYYY-MM-DD] [--dry-run] [--judge jev|chat] | check"""
+"""CLI: python -m jp_mo build [--date YYYY-MM-DD] [--dry-run] [--judge jev|chat] [--force] | check"""
 import argparse
 import sys
 import time
@@ -34,8 +34,8 @@ def cmd_build(args) -> int:
             print(e, file=sys.stderr)
             return 1
         http, judge = Http(), make_judge(cfg, args.judge or cfg.judge)
-    summary = pipeline.build(cfg, http, judge, now, day, dry_run=args.dry_run)
-    return 0 if summary["status"] == "ok" else 1
+    summary = pipeline.build(cfg, http, judge, now, day, dry_run=args.dry_run, force=args.force)
+    return 0 if summary["status"] in ("ok", "skipped: already built") else 1
 
 
 def timed(fn):
@@ -109,6 +109,7 @@ def main(argv=None) -> int:
     b.add_argument("--date", help="edition date (YYYY-MM-DD), default today in ET")
     b.add_argument("--dry-run", action="store_true", help="fixtures + stub judge, no network, no state writes")
     b.add_argument("--judge", choices=["jev", "chat"])
+    b.add_argument("--force", action="store_true", help="rebuild a day that already has an edition")
     sub.add_parser("check", help="verify every interface in .env")
     args = p.parse_args(argv)
     return cmd_build(args) if args.cmd == "build" else cmd_check(args)

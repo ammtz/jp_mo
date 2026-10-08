@@ -84,3 +84,8 @@ def test_text_helpers():
     assert plain("  a\n\n b  ", 3) == "a b"
     assert github_repo("git+https://github.com/Owner/Name.git") == "owner/name"
     assert github_repo("https://gitlab.com/a/b") is None
+
+
+def test_package_without_any_date_is_skipped_not_fatal():
+    p = {"name": "x", "repository_url": "https://github.com/o/x", "downloads": 5}
+    assert packages.to_candidate(p, "npmjs.org") is None

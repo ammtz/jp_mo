@@ -5,11 +5,14 @@ PREFERENCE = {s: i for i, s in enumerate(SOURCES)}
 
 
 def dedupe(candidates) -> list:
-    """Same URL -> one. Same repo across feeds -> merge, keeping the preferred feed's item."""
+    """Same URL -> one. Same repo across *different* feeds -> merge, keeping the preferred feed's
+    item. Two packages from one monorepo (same feed, same repo) stay separate items."""
     ordered = sorted(candidates, key=lambda c: PREFERENCE[c.source])
     by_url, by_repo, out = {}, {}, []
     for c in ordered:
-        keeper = by_url.get(c.url) or (by_repo.get(c.repo) if c.repo else None)
+        keeper = by_url.get(c.url)
+        if not keeper and c.repo:
+            keeper = next((k for k in by_repo.get(c.repo, []) if c.source not in k.sources), None)
         if keeper:
             for s in c.sources:
                 if s not in keeper.sources:
@@ -17,7 +20,7 @@ def dedupe(candidates) -> list:
             continue
         by_url[c.url] = c
         if c.repo:
-            by_repo[c.repo] = c
+            by_repo.setdefault(c.repo, []).append(c)
         out.append(c)
     return out
 

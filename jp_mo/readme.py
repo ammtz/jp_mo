@@ -34,7 +34,9 @@ def fetch_one(http, token: str, repo: str) -> str:
 
 def attach(http, token: str, candidates) -> int:
     """Fill c.readme for every repo-backed candidate. Returns how many got one."""
-    todo = [c for c in candidates if c.repo]
+    pkg_repos = [c.repo for c in candidates if c.sources == ["pkg"]]
+    monorepos = {r for r in pkg_repos if pkg_repos.count(r) > 1}
+    todo = [c for c in candidates if c.repo and not (c.sources == ["pkg"] and c.repo in monorepos)]
     with ThreadPoolExecutor(WORKERS) as pool:
         for c, text in zip(todo, pool.map(lambda c: fetch_one(http, token, c.repo), todo)):
             c.readme = text

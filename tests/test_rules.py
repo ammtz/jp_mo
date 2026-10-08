@@ -163,3 +163,33 @@ def test_readme_clean_strips_noise_and_cuts():
     assert clean(md) == "Title See the docs now. End."
     assert len(clean("word " * 400)) == 1000
     assert len(clean("word " * 400, 500)) == 500
+
+
+# --- review fixes (PR #2) --------------------------------------------------------
+def test_monorepo_packages_stay_separate_but_cross_feed_still_merges():
+    star = cand("gh_stars:vercel/ai", "gh_stars", repo="vercel/ai", url="https://github.com/vercel/ai")
+    p1 = cand("pkg:npmjs.org:@ai-sdk/a", "pkg", repo="vercel/ai", url="https://npm/a")
+    p2 = cand("pkg:npmjs.org:@ai-sdk/b", "pkg", repo="vercel/ai", url="https://npm/b")
+    out = normalize.dedupe([p1, p2])
+    assert len(out) == 2
+    out = normalize.dedupe([p1, star, p2])
+    assert [c.id for c in out] == ["gh_stars:vercel/ai", "pkg:npmjs.org:@ai-sdk/b"]
+    assert out[0].sources == ["gh_stars", "pkg"]
+
+
+def test_printing_a_package_does_not_block_its_monorepo_siblings(tmp_path):
+    st, day = State(tmp_path), date(2026, 10, 7)
+    st.mark_seen([cand("pkg:npmjs.org:@ai-sdk/a", "pkg", repo="vercel/ai")], day)
+    assert not st.was_seen(cand("pkg:npmjs.org:@ai-sdk/b", "pkg", repo="vercel/ai"), day)
+    # but printing the repo itself does block its packages
+    st.mark_seen([cand("gh_stars:vercel/ai", "gh_stars", repo="vercel/ai")], day)
+    assert st.was_seen(cand("pkg:npmjs.org:@ai-sdk/b", "pkg", repo="vercel/ai"), day)
+
+
+def test_merged_item_keeps_longest_seen_window(tmp_path):
+    st, day = State(tmp_path), date(2026, 10, 7)
+    merged = cand("gh_stars:o/new", "gh_stars", repo="o/new")
+    merged.sources = ["gh_stars", "gh_popular"]
+    st.mark_seen([merged], day)
+    back = cand("gh_popular:o/new", "gh_popular", repo="o/new")
+    assert st.was_seen(back, day + timedelta(days=10))

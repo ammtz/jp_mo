@@ -97,3 +97,54 @@ def test_config_env_overrides_file_and_strips_quotes(tmp_path):
 
 def test_goal_read_from_agents_md(cfg):
     assert cfg.goal == "Build small things."
+
+
+# --- review fixes (PR #2) --------------------------------------------------------
+def passing_judge():
+    j = StubJudge()
+    j.ask = lambda state, qs: {k: 0.9 for k in qs}
+    return j
+
+
+def test_same_day_rerun_is_refused_without_force(cfg):
+    pipeline.build(cfg, FixtureHttp(), passing_judge(), NOW, DAY)
+    first = (cfg.edition_dir / "edition_2026-10-07.md").read_text()
+    s = pipeline.build(cfg, FixtureHttp(), passing_judge(), NOW, DAY)
+    assert s["status"] == "skipped: already built"
+    assert (cfg.edition_dir / "edition_2026-10-07.md").read_text() == first
+    assert len((cfg.state_dir / "log.jsonl").read_text().splitlines()) == 1
+
+
+def test_force_rebuild_reproduces_the_day_and_skips_calibration(cfg):
+    pipeline.build(cfg, FixtureHttp(), passing_judge(), NOW, DAY)
+    first = (cfg.edition_dir / "edition_2026-10-07.md").read_text()
+    streak = json.loads((cfg.state_dir / "state.json").read_text())["streak"]
+    s = pipeline.build(cfg, FixtureHttp(), passing_judge(), NOW, DAY, force=True)
+    assert s["status"] == "ok" and s["rebuild"] is True
+    assert (cfg.edition_dir / "edition_2026-10-07.md").read_text() == first   # same items, not the next 5
+    assert json.loads((cfg.state_dir / "state.json").read_text())["streak"] == streak
+
+
+def test_no_edition_day_can_be_retried_without_force(cfg):
+    class Down(StubJudge):
+        def ask(self, state, qs):
+            from jp_mo.judge import JudgeError
+            raise JudgeError("gateway 503")
+    pipeline.build(cfg, FixtureHttp(), Down(), NOW, DAY)
+    assert pipeline.build(cfg, FixtureHttp(), passing_judge(), NOW, DAY)["status"] == "ok"
+
+
+def test_log_records_each_printed_p_and_histogram(cfg):
+    pipeline.build(cfg, FixtureHttp(), passing_judge(), NOW, DAY)
+    entry = json.loads((cfg.state_dir / "log.jsonl").read_text().splitlines()[-1])
+    assert all(item["p"] == 0.9 and item["pass"] == 1 for item in entry["printed"])
+    assert sum(entry["p_hist"]) == entry["scanned"] and entry["p_hist"][9] == entry["scanned"]
+
+
+def test_monorepo_packages_get_no_repo_readme(cfg):
+    from jp_mo import readme
+    a = cand("pkg:npmjs.org:@s/a", "pkg", repo="o/mono")
+    b = cand("pkg:npmjs.org:@s/b", "pkg", repo="o/mono")
+    solo = cand("pkg:npmjs.org:solo", "pkg", repo="o/solo")
+    readme.attach(FixtureHttp(), "", [a, b, solo])
+    assert a.readme == "" and b.readme == "" and solo.readme

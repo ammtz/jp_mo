@@ -46,7 +46,8 @@ def fetch_registry(http, reg, since):
 
 def to_candidate(p: dict, reg: str) -> Candidate | None:
     repo = github_repo(p.get("repository_url"))
-    if not repo:
+    published = p.get("first_release_published_at") or p.get("created_at")
+    if not repo or not published:
         return None
     return Candidate(
         id=f"pkg:{reg}:{p['name']}",
@@ -54,7 +55,7 @@ def to_candidate(p: dict, reg: str) -> Candidate | None:
         title=p["name"],
         url=p.get("registry_url") or p.get("homepage") or p["repository_url"],
         summary=plain(p.get("description")),
-        published_at=p.get("first_release_published_at") or p.get("created_at"),
+        published_at=published,
         metric=float(p.get("downloads") or 0),
         repo=repo,
         extra={"registry": reg, "downloads_period": p.get("downloads_period")},

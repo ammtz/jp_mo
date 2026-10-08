@@ -42,5 +42,5 @@ For every candidate with a `repo` (all `gh_stars` and `gh_popular`, and `pkg` it
 
 ## Dedupe
 1. Same `url` → one candidate.
-2. Same `repo` across `gh_stars`, `gh_popular` and `pkg` → merge into one candidate: keep the title and URL in that order of preference, and record all sources.
-3. Anything printed in the last 7 editions (30 for `gh_popular`; see `state/seen.json`) is dropped.
+2. Same `repo` across **different** feeds (`gh_stars`, `gh_popular`, `pkg`) → merge into one candidate: keep the title and URL in that order of preference, and record all sources. Packages from one monorepo (same feed, same repo) stay separate items, and they get no README excerpt, because the repo README describes the monorepo, not the package.
+3. Anything printed in the last 7 editions (30 for `gh_popular`; a merged item uses the longest window among its feeds; see `state/seen.json`) is dropped. Printing a repo blocks its packages too. Printing a package doesn't block its monorepo siblings.

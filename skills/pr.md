@@ -21,7 +21,7 @@ Format: `**Complete: TRUE · Irreversible: FALSE → 🟢 MERGE**`
 Be hardest on yourself when claiming 🟢. The agent that wrote the change is grading it. When in doubt, Irreversible = TRUE.
 
 ## One-way list (this repo always counts these as Irreversible = TRUE)
-- Sensitive things becoming public: secrets, personal data, private notes, or anything not meant for an open-source repo (pushing ordinary code and docs here is expected and doesn't count). Releases and deliveries that leave the machine (email, push) count too. A push can't be "unseen", even if the merge is reverted.
+- Anything that becomes public: pushing to this public repo, publishing, releases, deliveries that leave the machine (email, push). Pushing can't be "unseen", even if the merge is reverted.
 - License text or license grants. FSL's future MIT grant is irrevocable for every version already published.
 - Owner's name or email, or any secret, in a file, commit, or metadata. Git history keeps it, so treat it as leaked and rotate the secret.
 - Deleting or changing the format of `state/` (calibration level, run log, seen items, velocity snapshots) without a migration. History can't be refetched.
