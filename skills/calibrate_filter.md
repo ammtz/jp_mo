@@ -19,7 +19,7 @@ The automatic rule above only moves between existing wordings. The wordings them
 **Cadence: weekly at most.** Run it on Mondays, alongside the weekly check, and only when at least **20 new grades** have come in since the last round (about a week of editions). Otherwise skip it and say so in one line. Never run it more often, even if a footer flags `recalibrate: question`: the flag waits for Monday. The owner can always ask for a round explicitly.
 
 1. **Pool:** fetch today's candidates without judging or writing state.
-2. **Grades in:** start from the owner's grades on the past week's notes. Those are the main answer key.
+2. **Grades in:** run `python -m jp_mo grades` and start from the owner's grades on the past week's notes (`state/grades.json`). Those are the main answer key.
 3. **Interview:** at most 4 short questions, only where `context/calibration_log.md` doesn't already answer them.
 4. **Label (only if the grades are too few or too one-sided):** show about 10-15 items (no scores, to avoid bias), spread across high, middle and low P under the current question and across feeds. The owner grades each GREAT / GOOD / BAD in one line.
 5. **Test:** write 2-4 variants (state and/or ladder text), score the full pool with Jev, and compare: pair ordering against the grades, BAD items passing, average P per grade, and how many pass (target 8-12).

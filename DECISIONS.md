@@ -30,5 +30,6 @@ Format: `YYYY-MM-DD: decision. Why.`
 
 - 2026-10-07: The owner calibration loop runs weekly at most (Mondays), and only after 20 or more new grades. The daily automatic level step stays. Why: more often is too much for the owner.
 
+- 2026-10-07: Agent curator writes each news note (what it is, plus the concrete change to this system) with Kimi K3 via the gateway, about $0.07 per edition. Grades live in the edition files (tick boxes, or `jp_mo grade`) and are harvested every build. Why: the owner wants specific implementation notes and wants to grade each one.
+
 ## Open
-- Agent curator (writes each news note as a specific way to apply the item to this system) and per-note GREAT/GOOD/BAD grading that feeds the next calibration round. Owner's direction, 2026-10-07.

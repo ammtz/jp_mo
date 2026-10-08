@@ -1,6 +1,7 @@
 """Edition markdown. Never includes the owner's name."""
 from datetime import date
 
+from .grades import GRADE_LINE
 from .models import MOMENTUM_UNITS, SOURCE_LABELS
 
 SUMMARY_CHARS = 200
@@ -20,6 +21,7 @@ def footer(stats: dict) -> str:
         f"level {stats['level']}",
         "feeds failed: " + (", ".join(stats["feeds_failed"]) or "none"),
         f"judge {stats['judge_model']}",
+        f"curator {stats.get('curator_model') or 'off'}",
         f"cost ${stats['cost_usd']:.4f}",
     ]
     if stats.get("errors"):
@@ -33,7 +35,7 @@ def header(day: date) -> str:
     return f"# jp_mo · {day:%a} {day.isoformat()}"
 
 
-def edition(day: date, items, judgements, stats: dict) -> str:
+def edition(day: date, items, judgements, stats: dict, notes: dict | None = None) -> str:
     out = [header(day), ""]
     if len(items) < 4:
         out += [f"_Only {len(items)} item(s) cleared the filter today._", ""]
@@ -45,9 +47,13 @@ def edition(day: date, items, judgements, stats: dict) -> str:
             f"{sources} · +{c.momentum:,.0f} {MOMENTUM_UNITS[c.source]} · P {judgements[c.id].p:.2f}",
             c.url,
         ]
-        if blurb:
+        note = (notes or {}).get(c.id)
+        if note:
+            out += ["", f"**What:** {note.what}", f"**For jp_mo:** {note.apply}",
+                    f"**Effort:** {note.effort} · **Effect:** {note.effect}"]
+        elif blurb:
             out.append(blurb)
-        out.append("")
+        out += ["", GRADE_LINE, f"<!-- id: {c.id} -->", ""]
     out += ["---", footer(stats), ""]
     return "\n".join(out)
 

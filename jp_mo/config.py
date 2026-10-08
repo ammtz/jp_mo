@@ -42,6 +42,7 @@ class Config:
     judge: str
     jev_model: str
     chat_model: str
+    curator_model: str
     github_token: str
     youtube_key: str
     edition_dir: Path
@@ -71,6 +72,7 @@ def load(root: Path | None = None, environ: dict | None = None) -> Config:
         judge=judge,
         jev_model=get("JEV_MODEL", "typesafe-ai/jev"),
         chat_model=get("CHAT_MODEL", "moonshotai/kimi-k3"),
+        curator_model=get("CURATOR_MODEL", "moonshotai/kimi-k3"),
         github_token=get("GITHUB_TOKEN"),
         youtube_key=get("YOUTUBE_API_KEY"),
         edition_dir=(root / get("EDITION_DIR", "./editions")).resolve(),

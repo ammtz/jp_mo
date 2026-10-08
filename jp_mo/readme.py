@@ -1,5 +1,6 @@
 """Fetch a repo README and clean it to <= 1,000 chars of plain text."""
 import re
+import time
 from concurrent.futures import ThreadPoolExecutor
 
 from .sources.github import API, headers
@@ -7,6 +8,7 @@ from .sources.github import API, headers
 README_P1 = 500
 README_P2 = 1000
 WORKERS = 8
+BUDGET_S = 120      # whole README step; repos not started in time are judged without one
 
 
 def clean(md: str, limit: int = README_P2) -> str:
@@ -32,12 +34,17 @@ def fetch_one(http, token: str, repo: str) -> str:
         return ""
 
 
-def attach(http, token: str, candidates) -> int:
-    """Fill c.readme for every repo-backed candidate. Returns how many got one."""
+def attach(http, token: str, candidates, budget_s: float = BUDGET_S, clock=time.monotonic) -> int:
+    """Fill c.readme for every repo-backed candidate within the budget. Returns how many got one."""
     pkg_repos = [c.repo for c in candidates if c.sources == ["pkg"]]
     monorepos = {r for r in pkg_repos if pkg_repos.count(r) > 1}
     todo = [c for c in candidates if c.repo and not (c.sources == ["pkg"] and c.repo in monorepos)]
+    deadline = clock() + budget_s
+
+    def job(c):
+        return fetch_one(http, token, c.repo) if clock() < deadline else ""
+
     with ThreadPoolExecutor(WORKERS) as pool:
-        for c, text in zip(todo, pool.map(lambda c: fetch_one(http, token, c.repo), todo)):
+        for c, text in zip(todo, pool.map(job, todo)):
             c.readme = text
     return sum(1 for c in todo if c.readme)

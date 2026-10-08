@@ -82,12 +82,14 @@ class _Retrying:
                 self.sleep(wait)
 
     def _account(self, resp):
+        """Jev reports cost in providerMetadata.gateway.cost; chat completions in usage.cost."""
         gw = (resp.get("providerMetadata") or {}).get("gateway") or {}
+        usage = resp.get("usage") or {}
         try:
-            self.meta.cost_usd += float(gw.get("cost") or 0)
-        except ValueError:
+            self.meta.cost_usd += float(gw.get("cost") or usage.get("cost") or 0)
+        except (TypeError, ValueError):
             pass
-        self.meta.input_tokens += int((resp.get("usage") or {}).get("inputTokens") or 0)
+        self.meta.input_tokens += int(usage.get("inputTokens") or usage.get("prompt_tokens") or 0)
         self.meta.model = resp.get("model") or self.meta.model
 
 

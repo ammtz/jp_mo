@@ -1,5 +1,11 @@
-"""CLI: python -m jp_mo build [--date YYYY-MM-DD] [--dry-run] [--judge jev|chat] [--force] | check"""
+"""CLI:
+  python -m jp_mo build [--date YYYY-MM-DD] [--dry-run] [--judge jev|chat] [--force] [--no-curator]
+  python -m jp_mo grade [--date YYYY-MM-DD] 1=great 2=bad ...
+  python -m jp_mo grades
+  python -m jp_mo check
+"""
 import argparse
+import re
 import sys
 import time
 from dataclasses import replace
@@ -7,7 +13,7 @@ from datetime import date, datetime, timezone
 from urllib.parse import urlencode
 from zoneinfo import ZoneInfo
 
-from . import config, judge as judging, pipeline
+from . import config, curator as curating, grades, judge as judging, pipeline
 from .dryrun import FixtureHttp
 from .net import Http
 from .sources.github import API as GITHUB_API, headers as github_headers
@@ -26,7 +32,8 @@ def cmd_build(args) -> int:
     day = date.fromisoformat(args.date) if args.date else now.astimezone(ET).date()
     if args.dry_run:
         cfg = replace(cfg, youtube_key=cfg.youtube_key or "dry-run")
-        http, judge = FixtureHttp(), judging.StubJudge()
+        http, judge, curator = FixtureHttp(), judging.StubJudge(), curating.StubCurator()
+        readme_http = http
     else:
         try:
             cfg.require_gateway()
@@ -34,8 +41,48 @@ def cmd_build(args) -> int:
             print(e, file=sys.stderr)
             return 1
         http, judge = Http(), make_judge(cfg, args.judge or cfg.judge)
-    summary = pipeline.build(cfg, http, judge, now, day, dry_run=args.dry_run, force=args.force)
+        curator = None if args.no_curator else curating.Curator(cfg, Http(timeout=120, retries=0))
+        readme_http = Http(timeout=10, retries=0)   # READMEs fail fast; the step has its own budget
+    summary = pipeline.build(cfg, http, judge, now, day, dry_run=args.dry_run, force=args.force,
+                             curator=curator, readme_http=readme_http)
     return 0 if summary["status"] in ("ok", "skipped: already built") else 1
+
+
+def last_round(cfg):
+    p = cfg.root / "context" / "calibration_log.md"
+    dates = re.findall(r"^## Round \d+: (\d{4}-\d{2}-\d{2})", p.read_text(), re.M) if p.exists() else []
+    return date.fromisoformat(dates[-1]) if dates else None
+
+
+def cmd_grades(args) -> int:
+    cfg = config.load()
+    g = grades.harvest(cfg.edition_dir)
+    grades.save(cfg.state_dir, g)
+    since = last_round(cfg)
+    new = grades.count_since(g, since)
+    by = {k: sum(1 for v in g.values() if v == k) for k in grades.GRADES}
+    print(f"grades: {len(g)} total ({by['great']} great, {by['good']} good, {by['bad']} bad)")
+    status = "ready" if new >= grades.LOOP_MIN_NEW else f"waiting for grades ({new}/{grades.LOOP_MIN_NEW})"
+    print(f"since last calibration round ({since or 'never'}): {new} new → calibration: {status}")
+    return 0
+
+
+def cmd_grade(args) -> int:
+    cfg = config.load()
+    day = date.fromisoformat(args.date) if args.date else datetime.now(timezone.utc).astimezone(ET).date()
+    path = cfg.edition_dir / f"edition_{day.isoformat()}.md"
+    if not path.exists():
+        print(f"no edition for {day}", file=sys.stderr)
+        return 1
+    try:
+        marks = {int(n): g.lower() for n, g in (m.split("=", 1) for m in args.marks)}
+        done = grades.set_grades(path, marks)
+    except ValueError as e:
+        print(f"usage: grade [--date D] 1=great 2=good 3=bad ({e})", file=sys.stderr)
+        return 1
+    grades.save(cfg.state_dir, grades.harvest(cfg.edition_dir))
+    print(f"{day}: " + ", ".join(f"{n}={g}" for n, g in done))
+    return 0
 
 
 def timed(fn):
@@ -110,9 +157,14 @@ def main(argv=None) -> int:
     b.add_argument("--dry-run", action="store_true", help="fixtures + stub judge, no network, no state writes")
     b.add_argument("--judge", choices=["jev", "chat"])
     b.add_argument("--force", action="store_true", help="rebuild a day that already has an edition")
+    b.add_argument("--no-curator", action="store_true", help="skip the curator's news notes")
+    g = sub.add_parser("grade", help="grade today's notes: 1=great 2=good 3=bad")
+    g.add_argument("--date", help="edition date (YYYY-MM-DD), default today in ET")
+    g.add_argument("marks", nargs="+", metavar="N=GRADE")
+    sub.add_parser("grades", help="grade totals and calibration-loop readiness")
     sub.add_parser("check", help="verify every interface in .env")
     args = p.parse_args(argv)
-    return cmd_build(args) if args.cmd == "build" else cmd_check(args)
+    return {"build": cmd_build, "grade": cmd_grade, "grades": cmd_grades, "check": cmd_check}[args.cmd](args)
 
 
 if __name__ == "__main__":

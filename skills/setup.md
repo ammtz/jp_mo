@@ -48,7 +48,7 @@ Then run `python -m jp_mo check` and show its table.
 - If the code isn't built yet, do the same checks by hand with the calls listed under "Wiring check" in `SPEC.md`.
 
 ### 6. First edition
-Run `python -m jp_mo build` and show the edition. Explain: "Tomorrow's ranking will be sharper; velocity needs one day of history."
+Run `python -m jp_mo build` and show the edition. Explain: "Tomorrow's ranking will be sharper; velocity needs one day of history." Then explain grading: tick one box per note in the file, or tell the agent "grade 1 great, 2 bad" (it runs `python -m jp_mo grade 1=great 2=bad`). Grades drive the weekly calibration loop.
 
 ### 7. Schedule (ask, don't assume)
 "Want this every day at 7AM ET?"
