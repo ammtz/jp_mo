@@ -4,7 +4,7 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 
-DEFAULT_GOAL = "Come up with ideas and solutions I can personally implement and manage, solved through interviews."
+DEFAULT_GOAL = "A personal morning newsletter, graded note by note, that improves itself over time through an agent curator and Jev."
 
 
 class ConfigError(Exception):

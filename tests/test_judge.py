@@ -35,8 +35,13 @@ def test_ladder_matches_filter_rules_md():
 
 def test_higher_levels_spell_out_the_full_chain():
     text = judge.instructions(2)
-    assert text.startswith(judge.LADDER[0]) and "weekend" in text and "nothing well known" in text
+    assert text.startswith(judge.LADDER[0]) and "little-known" in text and "not incremental" in text
     assert "Same as level" not in text
+
+
+def test_state_inserts_goal_lowercased_without_final_period():
+    s = judge.state_text("A tiny newsletter.")
+    assert "building one system: a tiny newsletter. It fetches" in s
 
 
 def test_question_includes_readme_only_when_present():
