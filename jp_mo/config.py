@@ -47,6 +47,8 @@ class Config:
     youtube_key: str
     notion_token: str
     notion_page: str
+    redis_url: str
+    redis_token: str
     edition_dir: Path
     state_dir: Path
     goal: str
@@ -79,6 +81,8 @@ def load(root: Path | None = None, environ: dict | None = None) -> Config:
         youtube_key=get("YOUTUBE_API_KEY"),
         notion_token=get("NOTION_TOKEN"),
         notion_page=get("NOTION_PAGE_ID"),
+        redis_url=get("UPSTASH_REDIS_REST_URL") or get("KV_REST_API_URL"),
+        redis_token=get("UPSTASH_REDIS_REST_TOKEN") or get("KV_REST_API_TOKEN"),
         edition_dir=(root / get("EDITION_DIR", "./editions")).resolve(),
         state_dir=(root / get("STATE_DIR", "./state")).resolve(),
         goal=read_goal(root / "AGENTS.md"),

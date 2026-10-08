@@ -16,9 +16,17 @@ from zoneinfo import ZoneInfo
 from . import config, curator as curating, grades, judge as judging, notion as notioning, pipeline
 from .dryrun import FixtureHttp
 from .net import Http
+from .state import RedisStore, State
 from .sources.github import API as GITHUB_API, headers as github_headers
 
 ET = ZoneInfo("America/New_York")
+
+
+def make_store(cfg):
+    """Upstash Redis when configured (unattended runs), else local files in STATE_DIR."""
+    if cfg.redis_url and cfg.redis_token:
+        return RedisStore(Http(timeout=20, retries=1), cfg.redis_url, cfg.redis_token)
+    return None
 
 
 def make_notion(cfg):
@@ -52,7 +60,8 @@ def cmd_build(args) -> int:
         readme_http = Http(timeout=10, retries=0)   # READMEs fail fast; the step has its own budget
     summary = pipeline.build(cfg, http, judge, now, day, dry_run=args.dry_run, force=args.force,
                              curator=curator, readme_http=readme_http,
-                             notion=None if args.dry_run else make_notion(cfg))
+                             notion=None if args.dry_run else make_notion(cfg),
+                             store=None if args.dry_run else make_store(cfg))
     return 0 if summary["status"] in ("ok", "skipped: already built") else 1
 
 
@@ -71,7 +80,7 @@ def cmd_grades(args) -> int:
             g.update(nt.harvest(nt.ensure_db(cfg.notion_page), datetime.now(timezone.utc).astimezone(ET).date()))
         except Exception as e:
             print(f"notion grades: FAILED ({e})", file=sys.stderr)
-    grades.save(cfg.state_dir, g)
+    State(cfg.state_dir, store=make_store(cfg)).save_grades(g)
     since = last_round(cfg)
     new = grades.count_since(g, since)
     by = {k: sum(1 for v in g.values() if v == k) for k in grades.GRADES}
@@ -94,7 +103,6 @@ def cmd_grade(args) -> int:
     except ValueError as e:
         print(f"usage: grade [--date D] 1=great 2=good 3=bad ({e})", file=sys.stderr)
         return 1
-    grades.save(cfg.state_dir, grades.harvest(cfg.edition_dir))
     print(f"{day}: " + ", ".join(f"{n}={g}" for n, g in done))
     return 0
 
@@ -146,6 +154,15 @@ def cmd_check(args) -> int:
         db = nt.ensure_db(cfg.notion_page)
         return f"database ready ({db[:8]}…)"
 
+    def redis():
+        store = make_store(cfg)
+        if not store:
+            raise RuntimeError("UPSTASH_REDIS_REST_URL/TOKEN not set (state stays in local files)")
+        if store.cmd("PING") != "PONG":
+            raise RuntimeError("unexpected PING reply")
+        level = (store.read("state") or {}).get("level", "none yet")
+        return f"state store ready (level {level})"
+
     def ecosystems():
         http.get_json("https://packages.ecosyste.ms/api/v1/registries/npmjs.org/packages?per_page=1")
 
@@ -155,6 +172,7 @@ def cmd_check(args) -> int:
         ("YouTube", cfg.youtube_key, False, youtube),
         ("ecosyste.ms", "n/a", False, ecosystems),
         ("Notion (delivery)", cfg.notion_token, False, notion_check),
+        ("Upstash Redis (state)", cfg.redis_token, False, redis),
     ]:
         status, latency, note = timed(fn)
         if status == "FAIL" and not required:
