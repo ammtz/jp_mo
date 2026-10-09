@@ -31,6 +31,6 @@ Python backend. Frontend: JS/TS, HTML, CSS. Mobile welcome (Android/iOS, usable 
 
 ## Map
 - `context/`: sources.md, filter_rules.md, sort_rules.md, calibration_log.md, memory.md
-- `skills/`: setup.md, edition_build.md, calibrate_filter.md, pr.md
+- `skills/`: setup.md, edition_build.md, calibrate_filter.md, pr.md, ponytail.md
 - `SCHEDULED.md`: the 7AM job
 - `SPEC.md`: build spec (code layout, Jev call, acceptance)
